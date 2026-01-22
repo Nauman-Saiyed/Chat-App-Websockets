@@ -7,54 +7,56 @@
     rel="stylesheet"
     href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
   >
-  <link
-    rel="stylesheet"
-    href="{{ url_for('static', path='/css/styles.css') }}"
-  >
+  <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 
 <body>
-  <div class="container">
+<div class="container">
 
-    <h3 class="text-center mb-4">Chat Application</h3>
+  <h3 class="text-center mb-4">Chat Application</h3>
 
-    <!-- LOGIN SECTION -->
-    <div id="auth-section">
-      <input
-        type="text"
-        id="login-username"
-        class="form-control mb-2"
-        placeholder="Username"
-      >
-      <input
-        type="password"
-        id="login-password"
-        class="form-control mb-3"
-        placeholder="Password"
-      >
-      <button id="login-btn" class="btn btn-primary btn-block">
-        Login
-      </button>
-    </div>
-
-    <!-- ROOM SECTION -->
-    <div id="room-section" style="display:none;">
-      <input
-        type="text"
-        id="room-name"
-        class="form-control mb-2"
-        placeholder="Enter Room Name"
-      >
-      <button id="join-room" class="btn btn-success btn-block">
-        Join Room
-      </button>
-    </div>
-
-
+  <!-- LOGIN -->
+  <div id="login-section">
+    <input id="username" class="form-control mb-2" placeholder="Username">
+    <input id="password" type="password" class="form-control mb-3" placeholder="Password">
+    <button id="login-btn" class="btn btn-primary btn-block">Login</button>
   </div>
 
-  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-  <script src="{{ url_for('static', path='/js/scripts.js') }}"></script>
+  <!-- LOBBY -->
+  <div id="lobby-section" style="display:none;">
+    <input id="new-room-name" class="form-control mb-2" placeholder="Create Room Name">
+    <button id="create-room" class="btn btn-info btn-block mb-3">
+      Create Room
+    </button>
+
+    <hr>
+
+    <input id="join-room-id" class="form-control mb-2" placeholder="Enter Room ID to Join">
+    <button id="join-room" class="btn btn-success btn-block">
+      Join Room
+    </button>
+  </div>
+
+  <!-- CHAT -->
+  <div id="chat-section" style="display:none;">
+    <div class="alert alert-secondary">
+      <strong>Room:</strong> <span id="room-name"></span><br>
+      <strong>Room ID:</strong> <span id="room-id"></span>
+    </div>
+
+    <ul id="messages"></ul>
+
+    <input id="message" class="form-control mt-2" placeholder="Type message...">
+    <button id="send" class="btn btn-primary btn-block mt-2">Send</button>
+
+    <button id="leave-room" class="btn btn-danger btn-block mt-3">
+      Leave Room
+    </button>
+  </div>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script src="/static/js/scripts.js"></script>
 </body>
 </html>

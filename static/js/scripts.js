@@ -1,144 +1,172 @@
 let socket = null;
-let room = "";
+let roomId = null;
+let isAdmin = false;
 
 /* =========================
-   LOGIN (AUTO CREATE USER)
+   LOGIN
 ========================= */
+$("#login-btn").click(async () => {
+  const res = await fetch("/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: $("#username").val(),
+      password: $("#password").val()
+    })
+  });
 
-$("#login-btn").click(async function () {
-  const username = $("#login-username").val();
-  const password = $("#login-password").val();
+  const data = await res.json();
+  if (!res.ok) return alert(data.detail || "Login failed");
 
-  if (!username || !password) {
-    alert("Username and password are required");
-    return;
-  }
+  localStorage.setItem("token", data.access_token);
 
-  try {
-    const response = await fetch("/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        username: username,
-        password: password
-      })
-    });
+  $("#login-section").hide();
+  $("#lobby-section").show();
+});
 
-    const data = await response.json();
+/* =========================
+   CREATE ROOM
+========================= */
+$("#create-room").click(async () => {
+  const roomName = $("#new-room-name").val();
+  if (!roomName) return alert("Room name required");
 
-    if (!response.ok) {
-      alert(data.detail || "Login failed");
-      return;
-    }
+  const res = await fetch("/rooms", {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ room_name: roomName })
+  });
 
-    // Store JWT
-    localStorage.setItem("access_token", data.access_token);
+  const data = await res.json();
+  if (!res.ok) return alert(data.detail);
 
-    // Move to room section
-    $("#auth-section").hide();
-    $("#room-section").show();
+  roomId = data.room_id;
+  isAdmin = true;
 
-  } catch (error) {
-    console.error(error);
-    alert("Server not reachable");
-  }
+  enterRoom(data.room_name);
 });
 
 /* =========================
    JOIN ROOM
 ========================= */
+$("#join-room").click(async () => {
+  const joinId = $("#join-room-id").val();
+  if (!joinId) return alert("Room ID required");
 
-$("#join-room").click(function () {
-  room = $("#room-name").val();
+  const res = await fetch("/rooms/join", {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ room_id: joinId })
+  });
 
-  if (!room) {
-    alert("Enter a room name");
-    return;
-  }
+  const data = await res.json();
+  if (!res.ok) return alert(data.detail);
 
-  $("#room-section").hide();
-  $("#chat").show();
-  $("#message-input").show();
+  roomId = data.room_id;
+  isAdmin = data.is_admin;
 
-  initializeWebSocket();
+  enterRoom(data.room_name);
 });
+
+/* =========================
+   ENTER ROOM
+========================= */
+function enterRoom(roomName) {
+  $("#lobby-section").hide();
+  $("#chat-section").show();
+
+  $("#room-name").text(roomName);
+  $("#room-id").text(roomId);
+
+  connectSocket();
+}
 
 /* =========================
    WEBSOCKET
 ========================= */
-
-function initializeWebSocket() {
-  const token = localStorage.getItem("access_token");
-
-  if (!token) {
-    alert("Unauthorized");
-    return;
-  }
-
+function connectSocket() {
   socket = new WebSocket(
-    `ws://${location.host}/message?room=${room}&token=${token}`
+    `ws://${location.host}/message?room=${roomId}&token=${localStorage.getItem("token")}`
   );
 
-  socket.onopen = function () {
-    console.log("WebSocket connected");
+  socket.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+
+    /* 🔥 ROOM CLOSED BY ADMIN */
+    if (msg.type === "ROOM_CLOSED") {
+      alert("Room closed by admin");
+      socket.close();
+      resetLobby();
+      return;
+    }
+
+    /* 🔥 USER LEFT */
+    if (msg.type === "USER_LEFT") {
+      $("#messages").append(
+        $("<li>").addClass("system").text(`${msg.username} left the room`)
+      );
+      return;
+    }
+
+    /* 🔥 NORMAL CHAT MESSAGE */
+    $("#messages").append(
+      $("<li>").text(`${msg.username}: ${msg.message}`)
+    );
   };
 
-  socket.onmessage = function (event) {
-    const data = JSON.parse(event.data);
-
-    const msgClass = data.isMe ? "user-message" : "other-message";
-    const messageElement = $("<li>")
-      .addClass(msgClass)
-      .text(`${data.username}: ${data.data}`);
-
-    $("#messages").append(messageElement);
-    $("#chat").scrollTop($("#chat")[0].scrollHeight);
-  };
-
-  socket.onerror = function () {
-    alert("WebSocket error");
-  };
-
-  socket.onclose = function () {
-    alert("WebSocket disconnected");
+  socket.onclose = () => {
+    // ❌ NO GUESSING HERE
+    console.log("Socket closed");
   };
 }
 
 /* =========================
    SEND MESSAGE
 ========================= */
-
-$("#send").click(sendMessage);
-
-$("#message").keydown(function (e) {
-  if (e.key === "Enter") {
-    sendMessage();
-  }
-});
-
-function sendMessage() {
-  const message = $("#message").val();
-
-  if (!message || !socket) return;
+$("#send").click(() => {
+  const msg = $("#message").val();
+  if (!msg || !socket) return;
 
   socket.send(
     JSON.stringify({
-      message: message,
-      room: room
+      message: msg,
+      room: roomId
     })
   );
 
   $("#message").val("");
-}
+});
 
 /* =========================
-   LOGOUT (OPTIONAL)
+   LEAVE ROOM
 ========================= */
+$("#leave-room").click(async () => {
+  await fetch("/rooms/leave", {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ room_id: roomId })
+  });
 
-function logout() {
-  localStorage.removeItem("access_token");
   if (socket) socket.close();
-  location.reload();
+  resetLobby();
+});
+
+/* =========================
+   HELPERS
+========================= */
+function resetLobby() {
+  roomId = null;
+  isAdmin = false;
+  socket = null;
+
+  $("#messages").empty();
+  $("#chat-section").hide();
+  $("#lobby-section").show();
+}
+
+function authHeaders() {
+  return {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer " + localStorage.getItem("token")
+  };
 }

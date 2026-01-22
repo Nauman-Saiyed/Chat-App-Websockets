@@ -44,3 +44,18 @@ body {
   border-radius: 6px;
   text-align: right;
 }
+
+#messages {
+  list-style: none;
+  padding-left: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+#messages li {
+  background: #f1f1f1;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+}
+
