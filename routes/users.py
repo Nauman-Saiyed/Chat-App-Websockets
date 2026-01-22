@@ -14,11 +14,11 @@ router = APIRouter(
 @router.post("" , status_code=status.HTTP_201_CREATED)
 async def create_user(data : CreateUser , db = Depends(get_db)):
     existing_user = await db.users.find_one(
-        {"email" : data.email}
+        {"username" : data.username}
     )
     
     if existing_user :
-        raise HTTPException(status_code=400 , detail="Email Already Registered")
+        raise HTTPException(status_code=400 , detail="User Already Registered")
     
     user = user_detail(data.dict())
     await db.users.insert_one(user)
@@ -35,8 +35,8 @@ async def get_users(
     async for user in db.users.find():
         users.append({
             "user_id": str(user["_id"]),
-            "name": user["name"],
-            "email": user["email"],
+            "username": user["username"],
+            # "email": user["email"],
             "created_at": user["created_at"],
         })
     return users
@@ -56,8 +56,8 @@ async def get_one_user(
     
     return {
         "user_id": str(user["_id"]),
-        "name": user["name"],
-        "email": user["email"],
+        "username": user["username"],
+        # "email": user["email"],
         "created_at": user["created_at"],
     }
 

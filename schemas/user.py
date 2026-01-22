@@ -3,7 +3,7 @@ from typing import Optional
 from datetime import datetime
 
 class LoginSchema(BaseModel):
-    email : EmailStr
+    username : str
     password : str
 
 
@@ -12,18 +12,18 @@ class TokenResponse(BaseModel):
     token_type :  str = "bearer"
 
 class CreateUser(BaseModel):
-    name : str
-    email : EmailStr
+    username : str
+    # email : EmailStr
     password : str
 
 
 class UpdateUser(BaseModel):
-    name : Optional[str] = None
-    email : Optional[str] = None
+    username : Optional[str] = None
+    # email : Optional[str] = None
 
 
 class UserResponse(BaseModel):
     user_id : str
-    name : str
-    email : EmailStr
+    username : str
+    # email : EmailStr
     created_at : datetime

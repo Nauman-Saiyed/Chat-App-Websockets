@@ -1,78 +1,144 @@
+let socket = null;
+let room = "";
 
-let $ = jQuery;
-let socket;
-const SOCKET_URL="ws://192.168.1.16:8000/message"
+/* =========================
+   LOGIN (AUTO CREATE USER)
+========================= */
+
+$("#login-btn").click(async function () {
+  const username = $("#login-username").val();
+  const password = $("#login-password").val();
+
+  if (!username || !password) {
+    alert("Username and password are required");
+    return;
+  }
+
+  try {
+    const response = await fetch("/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        username: username,
+        password: password
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      alert(data.detail || "Login failed");
+      return;
+    }
+
+    // Store JWT
+    localStorage.setItem("access_token", data.access_token);
+
+    // Move to room section
+    $("#auth-section").hide();
+    $("#room-section").show();
+
+  } catch (error) {
+    console.error(error);
+    alert("Server not reachable");
+  }
+});
+
+/* =========================
+   JOIN ROOM
+========================= */
+
+$("#join-room").click(function () {
+  room = $("#room-name").val();
+
+  if (!room) {
+    alert("Enter a room name");
+    return;
+  }
+
+  $("#room-section").hide();
+  $("#chat").show();
+  $("#message-input").show();
+
+  initializeWebSocket();
+});
+
+/* =========================
+   WEBSOCKET
+========================= */
+
 function initializeWebSocket() {
-  socket = new WebSocket(SOCKET_URL);
+  const token = localStorage.getItem("access_token");
 
-  socket.onopen = function (event) {
-    console.log('WebSocket connection established.');
+  if (!token) {
+    alert("Unauthorized");
+    return;
+  }
+
+  socket = new WebSocket(
+    `ws://${location.host}/message?room=${room}&token=${token}`
+  );
+
+  socket.onopen = function () {
+    console.log("WebSocket connected");
   };
 
   socket.onmessage = function (event) {
     const data = JSON.parse(event.data);
-    const msgClass = data.isMe ? 'user-message' : 'other-message';
-    const sender = data.isMe ? 'You' : data.username;
-    const message = data.data;
-    const messageElement = $('<li>').addClass('clearfix');
-    messageElement.append($('<div>').addClass(msgClass).text(sender + ': ' + message));
-    $('#messages').append(messageElement);
-    $('#chat').scrollTop($('#chat')[0].scrollHeight);
+
+    const msgClass = data.isMe ? "user-message" : "other-message";
+    const messageElement = $("<li>")
+      .addClass(msgClass)
+      .text(`${data.username}: ${data.data}`);
+
+    $("#messages").append(messageElement);
+    $("#chat").scrollTop($("#chat")[0].scrollHeight);
   };
 
-
-  socket.onerror = function (event) {
-    console.error('WebSocket error. Please rejoin the chat.');
-    showJoinModal();
+  socket.onerror = function () {
+    alert("WebSocket error");
   };
 
-  socket.onclose = function (event) {
-    if (event.code === 1000) {
-      console.log('WebSocket closed normally.');
-    } else {
-      console.error('WebSocket closed with error code: ' + event.code + '. Please rejoin the chat.');
-      showJoinModal();
-    }
+  socket.onclose = function () {
+    alert("WebSocket disconnected");
   };
 }
 
-function showJoinModal() {
-  $('#username-form').show();
-  $('#chat').hide();
-  $('#message-input').hide();
-  $('#usernameModal').modal('show');
-}
+/* =========================
+   SEND MESSAGE
+========================= */
 
-$('#open-modal').click(function () {
-  showJoinModal();
-});
+$("#send").click(sendMessage);
 
-function joinChat() {
-  $('#username-form').hide();
-  $('#chat').show();
-  $('#message-input').show();
-  $('#usernameModal').modal('hide');
-}
-
-$('#join').click(function () {
-  initializeWebSocket();
-  joinChat()
-});
-
-$('#send').click(function () {
-  sendMessage();
-});
-
-$('#message').keydown(function (event) {
-  if (event.key === "Enter") {
+$("#message").keydown(function (e) {
+  if (e.key === "Enter") {
     sendMessage();
   }
 });
 
 function sendMessage() {
-  const message = $('#message').val();
-  if (message) {
-    socket.send(JSON.stringify({ "message": message, "username": $('#usernameInput').val() }));
-    $('#message').val('');
-  }
+  const message = $("#message").val();
+
+  if (!message || !socket) return;
+
+  socket.send(
+    JSON.stringify({
+      message: message,
+      room: room
+    })
+  );
+
+  $("#message").val("");
+}
+
+/* =========================
+   LOGOUT (OPTIONAL)
+========================= */
+
+function logout() {
+  localStorage.removeItem("access_token");
+  if (socket) socket.close();
+  location.reload();
 }
