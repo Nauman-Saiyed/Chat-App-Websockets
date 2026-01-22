@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from typing import Dict
 import uuid
 import json
+from routes import auth , users
+from core.config import settings
 
 
 templates = Jinja2Templates(directory="templates")
@@ -55,7 +57,11 @@ class ConnectionManager:
 
 
 
-app = FastAPI()
+app = FastAPI(title=settings.APP_NAME)
+
+app.include_router(auth.router)
+app.include_router(users.router)
+
 app.mount("/static" , StaticFiles(directory="static") , name="static")
 connection_manager = ConnectionManager()
 
