@@ -11,28 +11,36 @@ router = APIRouter(
 )
 
 
-@router.post("/login" , response_model=TokenResponse)
-async def login(data : LoginSchema , db =  Depends(get_db)):
-    
-    print(data)
+@router.post("/login", response_model=TokenResponse)
+async def login(data: LoginSchema, db=Depends(get_db)):
+
     user = await db.users.find_one(
-        {"username" : data.username , "deleted_at" : None}
+        {"username": data.username, "deleted_at": None}
     )
-    
-    if not user :
-        hashed = hash_password(data.password)
-        new_user = await db.users.insert_one(
-            {"username" : data.username, "password" : hashed , "created_at" : datetime.now(UTC) , "updated_at" : datetime.now(UTC) | None , "deleted_at" : None}
-        )
-        print(new_user)
-        # result = await db.users.insert_one(new_user)
-        user_id = new_user.inserted_id
-        # raise HTTPException(status_code=401 , detail="Invalid Credentials")
+
+    # USER DOES NOT EXIST → CREATE
+    if not user:
+        hashed_password = hash_password(data.password)
+
+        result = await db.users.insert_one({
+            "username": data.username,
+            "password": hashed_password,
+            "created_at": datetime.now(UTC),
+            "deleted_at": None
+        })
+
+        user_id = result.inserted_id
+
+    # USER EXISTS → VERIFY PASSWORD
     else:
-        if not verify_password(data.password , user["password"]):
-            raise HTTPException(status_code=401 , detail="Invalid Credentials")
-    
-    user_id = user["_id"]
-    token = create_access_token({"sub" : str(user_id)})
-    
-    return {"access_token" : token}
+        if not verify_password(data.password, user["password"]):
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        user_id = user["_id"]
+
+    # AUTO LOGIN (COMMON FOR BOTH)
+    token = create_access_token({"sub": str(user_id)})
+
+    return {
+        "access_token": token,
+    }

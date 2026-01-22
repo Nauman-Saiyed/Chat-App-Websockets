@@ -6,62 +6,19 @@ from dataclasses import dataclass
 from typing import Dict
 import uuid
 import json
-from routes import auth , users
+from core.connection_manager import ConnectionManager
+from routes import auth , users , rooms
 from core.config import settings
 
 
 templates = Jinja2Templates(directory="templates")
-@dataclass
-class ConnectionManager:
-    
-    def __init__(self):
-        self.active_connections : dict = {}
-
-    async def connect(self , websocket : WebSocket):
-            await websocket.accept()
-            id = str(uuid.uuid4())
-            
-            self.active_connections[id] = websocket
-            
-            message = json.dumps({"isMe" : True , "data" : "Have Joined!!" , "username" : "You"} )
-            await self.send_personal_message(message  , websocket)
-
-    def find_id(self , websocket : WebSocket):
-        websocket_list = list(self.active_connections.values())
-        id_list = list(self.active_connections.keys())
-        
-        pos = websocket_list.index(websocket)
-        return id_list[pos]
-
-
-    def disconnect(self , websocket : WebSocket):
-        id = self.find_id(websocket)
-        self.active_connections.remove(id)
-        
-        return id
-
-    async def send_personal_message(self , message : str , websocket : WebSocket):
-        await websocket.send_text(message)
-
-    async def broadcast(self, webSocket: WebSocket, data: str):
-        decoded_data = json.loads(data)
-        for connection in self.active_connections.values():
-            print(connection)
-            is_me = False
-            if connection == webSocket:
-                print(connection)
-                is_me = True
-
-            await connection.send_text(json.dumps({"isMe": is_me, "data": decoded_data['message'], "username": decoded_data['username']}))
-
-
 
 
 app = FastAPI(title=settings.APP_NAME)
 
 app.include_router(auth.router)
 app.include_router(users.router)
-
+app.include_router(rooms.router)
 app.mount("/static" , StaticFiles(directory="static") , name="static")
 connection_manager = ConnectionManager()
 

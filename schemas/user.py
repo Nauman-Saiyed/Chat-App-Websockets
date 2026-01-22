@@ -1,4 +1,4 @@
-from pydantic import BaseModel , EmailStr
+from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
@@ -27,3 +27,5 @@ class UserResponse(BaseModel):
     username : str
     # email : EmailStr
     created_at : datetime
+
+
