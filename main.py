@@ -7,6 +7,7 @@ from typing import Dict
 import uuid
 import json
 
+
 templates = Jinja2Templates(directory="templates")
 @dataclass
 class ConnectionManager:
@@ -38,27 +39,10 @@ class ConnectionManager:
         return id
 
     async def send_personal_message(self , message : str , websocket : WebSocket):
-        print(self.active_connections)
-        # print(send_personal_message)
         await websocket.send_text(message)
 
-    # async def display(self , message : str , websocket : WebSocket):
-    #     decoded_data = json.loads(message) 
-        
-    #     for connection in self.active_connections.values():
-    #         is_me = False
-    #         if(connection == websocket):
-    #             is_me = True    
-            
-    #         msg = json.dumps({"isMe" : is_me , "data" : decoded_data['message'] , 'username' : decoded_data['username']})
-    #         await connection.send_text(msg)
-
     async def broadcast(self, webSocket: WebSocket, data: str):
-        # print(data)
         decoded_data = json.loads(data)
-        # print(webSocket)
-        # self.active_connections
-        # print(decoded_data)
         for connection in self.active_connections.values():
             print(connection)
             is_me = False
