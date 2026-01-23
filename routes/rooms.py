@@ -58,11 +58,11 @@ async def join_room(
         raise HTTPException(status_code=400 , detail="Room does not Exist")
     
     # if user_id not in existing_room["members"]:
-    await db.rooms.update_one(
+    new_mem = await db.rooms.update_one(
         {"_id" : ObjectId(data.room_id)} ,
             {
                 "$addToSet" : {
-                    "members" : ObjectId(user_id)
+                    "members" : str(ObjectId(user_id))
                 }
             }
     )
@@ -78,9 +78,8 @@ async def join_room(
 async def leave_room(
     data : LeaveRoom,
     db=Depends(get_db),
-    user_id_str =Depends(get_current_user)
+    user_id =Depends(get_current_user)
 ):
-    user_id = ObjectId(user_id_str)
     existing_room = await db.rooms.find_one(
         {"_id": ObjectId(data.room_id)}
     )
@@ -90,16 +89,16 @@ async def leave_room(
     
     if existing_room["admin_id"] == user_id:
         await db.rooms.delete_one(
-            {"_id" : user_id}
+            {"_id" : ObjectId(data.room_id)}
         )
         return {"message" : "Room Dismantled by Admin"}
     
     if user_id in existing_room["members"]:
-        await db.rooms.update_one(
-            {"-id" : ObjectId(data.room_id)},
+        await db.rooms.update_many(
+            {"_id" : ObjectId(data.room_id)},
             {
                 "$pull" : {
-                    "members" : ObjectId(user_id)
+                    "members" : str(ObjectId(user_id))
                 }
             }
         )
