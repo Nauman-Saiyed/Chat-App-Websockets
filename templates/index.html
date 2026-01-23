@@ -39,19 +39,44 @@
 
   <!-- CHAT -->
   <div id="chat-section" style="display:none;">
+
+    <!-- ✅ NEW: top bar -->
+    <div class="chat-topbar">
+      <div class="top-left">
+        <span class="label">User:</span>
+        <span id="current-user" class="value">-</span>
+      </div>
+
+      <div class="top-right">
+        <span class="label">Users:</span>
+        <span id="user-count" class="badge badge-primary">0</span>
+      </div>
+    </div>
+
     <div class="alert alert-secondary">
       <strong>Room:</strong> <span id="room-name"></span><br>
       <strong>Room ID:</strong> <span id="room-id"></span>
     </div>
 
-    <ul id="messages"></ul>
+    <!-- ✅ NEW: layout with members list + chat -->
+    <div class="chat-layout">
+      <div class="members-panel">
+        <div class="members-header">Members</div>
+        <ul id="members-list" class="members-list"></ul>
+      </div>
 
-    <input id="message" class="form-control mt-2" placeholder="Type message...">
-    <button id="send" class="btn btn-primary btn-block mt-2">Send</button>
+      <div class="chat-panel">
+        <ul id="messages"></ul>
 
-    <button id="leave-room" class="btn btn-danger btn-block mt-3">
-      Leave Room
-    </button>
+        <input id="message" class="form-control mt-2" placeholder="Type message...">
+        <button id="send" class="btn btn-primary btn-block mt-2">Send</button>
+
+        <button id="leave-room" class="btn btn-danger btn-block mt-3">
+          Leave Room
+        </button>
+      </div>
+    </div>
+
   </div>
 
 </div>

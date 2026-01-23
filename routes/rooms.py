@@ -13,7 +13,7 @@ router = APIRouter(
 )
 
 
-@router.post("")
+@router.post("/")
 async def create_room(
         data : CreateRooms ,
         db = Depends(get_db) , 
@@ -30,8 +30,8 @@ async def create_room(
     room_detail = {
             "_id" : ObjectId(),
             "room_name" : data.room_name,
-            "admin_id" : user_id,
-            "members" : [user_id]
+            "admin_id" : ObjectId(user_id),
+            "members" : [ObjectId(user_id)]
         }
     
     new_room = await db.rooms.insert_one(room_detail)
@@ -39,7 +39,7 @@ async def create_room(
     return {"message" : "Room Created " ,
             "room_id" : str(new_room.inserted_id),
             "room_name" : data.room_name,
-            "is_admin" : True
+            "is_admin":  True
             }
 
 
@@ -58,11 +58,11 @@ async def join_room(
         raise HTTPException(status_code=400 , detail="Room does not Exist")
     
     # if user_id not in existing_room["members"]:
-    new_mem = await db.rooms.update_one(
+    await db.rooms.update_one(
         {"_id" : ObjectId(data.room_id)} ,
             {
                 "$addToSet" : {
-                    "members" : str(ObjectId(user_id))
+                    "members" : ObjectId(user_id)
                 }
             }
     )
@@ -87,18 +87,29 @@ async def leave_room(
     if not existing_room:
         return {"message": "Room already removed"}
     
-    if existing_room["admin_id"] == user_id:
+    admin_id = existing_room.get("admin_id")
+    is_admin = (
+            admin_id == ObjectId(user_id) or 
+            str(admin_id) == str(user_id)
+        )
+    
+    if is_admin:
         await db.rooms.delete_one(
             {"_id" : ObjectId(data.room_id)}
         )
+        
+        await db.messages.delete_many(
+            {"room_id" : data.room_id}
+        )
+        # await room_manager.close_room(data.room_id)
         return {"message" : "Room Dismantled by Admin"}
     
-    if user_id in existing_room["members"]:
-        await db.rooms.update_many(
+    if ObjectId(user_id) in existing_room["members"]:
+        await db.rooms.update_one(
             {"_id" : ObjectId(data.room_id)},
             {
                 "$pull" : {
-                    "members" : str(ObjectId(user_id))
+                    "members" : ObjectId(user_id)
                 }
             }
         )
