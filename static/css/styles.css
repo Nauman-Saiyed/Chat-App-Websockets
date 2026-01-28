@@ -1,0 +1,113 @@
+body {
+  background-color: #f4f4f4;
+}
+
+.container {
+  max-width: 650px; /* ✅ a bit wider to fit members list */
+  margin-top: 60px;
+  background-color: #ffffff;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.1);
+}
+
+#messages {
+  list-style: none;
+  padding-left: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+#messages li {
+  background: #f1f1f1;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+}
+
+#messages li.system {
+  background: #fff7e6;
+  border: 1px solid #ffe4b3;
+  color: #6a4b00;
+  font-style: italic;
+}
+
+/* ✅ NEW: top bar */
+.chat-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.chat-topbar .label {
+  opacity: 0.75;
+  margin-right: 6px;
+}
+
+.chat-topbar .value {
+  font-weight: 600;
+}
+
+/* ✅ NEW: layout */
+.chat-layout {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.members-panel {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.members-header {
+  padding: 8px 10px;
+  font-weight: 600;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.members-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px 6px;
+  max-height: 430px;
+  overflow-y: auto;
+}
+
+.members-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+.members-list li:hover {
+  background: #f3f6ff;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  background: #adb5bd; /* default gray */
+}
+
+.dot.active {
+  background: #28a745; /* green */
+}
+
+.member-name {
+  font-weight: 500;
+  word-break: break-word;
+}

@@ -1,3 +1,9 @@
 fastapi[standard]
 uvicorn
 websockets
+motor
+pydantic-settings
+pydantic
+pymongo
+python-jose[cryptography]
+passlib[bcrypt]
